@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bài kiểm tra - An ninh toàn cầu & Tổ chức quốc tế</title>
+<style>
+  :root {
+    --primary: #1a73e8;
+    --correct: #0d904f;
+    --wrong: #d93025;
+    --bg: #f8f9fa;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: #202124;
+    line-height: 1.5;
+    padding: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    color: #174ea6;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 16px 0 24px;
+    padding: 12px;
+    background: var(--card);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  }
+  button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background .2s;
+  }
+  button:hover { background: #1557b0; }
+  button.secondary { background: #5f6368; }
+  button.secondary:hover { background: #3c4043; }
+  .question-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    border-left: 4px solid var(--primary);
+  }
+  .q-number {
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+    font-size: 1.05rem;
+  }
+  .q-text {
+    margin-bottom: 14px;
+    font-size: 1.02rem;
+  }
+  .options label {
+    display: block;
+    padding: 10px 14px;
+    margin: 6px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid #dadce0;
+    transition: all .15s;
+  }
+  .options label:hover {
+    background: #e8f0fe;
+    border-color: #aecbfa;
+  }
+  .options input { margin-right: 10px; }
+  .options label.selected {
+    background: #e8f0fe;
+    border-color: var(--primary);
+  }
+  .options label.correct {
+    background: #e6f4ea;
+    border-color: var(--correct);
+    color: var(--correct);
+  }
+  .options label.wrong {
+    background: #fce8e6;
+    border-color: var(--wrong);
+    color: var(--wrong);
+  }
+  .feedback {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: #e6f4ea; color: #0d904f; }
+  .feedback.wrong { background: #fce8e6; color: #d93025; }
+  .section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 28px 0 14px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--primary);
+    color: #174ea6;
+  }
+  .short-answer {
+    background: #fff8e1;
+    border-left-color: #f9ab00;
+  }
+  .short-answer textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+  }
+  .score-box {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--card);
+    border-radius: 12px;
+    display: none;
+  }
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .controls { flex-direction: column; }
+    button { width: 100%; }
+  }
+</style>
+</head>
+<body>
+  <h1>BÀI KIỂM TRA<br>An ninh toàn cầu – Tổ chức quốc tế</h1>
+  <p style="text-align:center;color:#5f6368;margin-bottom:8px">Giữ nguyên thứ tự câu hỏi gốc • Có chế độ đảo câu & đảo đáp án</p>
+
+  <div class="controls">
+    <button onclick="shuffleQuestions()">🔀 Đảo thứ tự câu hỏi</button>
+    <button onclick="shuffleOptions()">🔀 Đảo đáp án (A/B/C/D)</button>
+    <button class="secondary" onclick="resetQuiz()">↺ Reset về gốc</button>
+    <button onclick="checkAll()">✅ Kiểm tra tất cả</button>
+  </div>
+
+  <div id="quiz-container"></div>
+
+  <div class="score-box" id="scoreBox"></div>
+
+<script>
+// ===================== DỮ LIỆU CÂU HỎI (đã cập nhật) =====================
+const originalQuestions = [
+  // ========== CÂU 5 (mới thêm) ==========
+  {
+    id: 5,
+    type: "mc",
+    text: "Nhiệm vụ chủ yếu của Tổ chức thương mại thế giới (WTO) đối với các cuộc đàm phán đa phương là",
+    options: [
+      "A. tổ chức các diễn đàn.",
+      "B. kí kết các hiệp định.",
+      "C. tư vấn kí kết hiệp định.",
+      "D. giám sát chính sách."
+    ],
+    correct: 0,
+    explain: "Nhiệm vụ chủ yếu của WTO đối với các cuộc đàm phán đa phương là tổ chức các diễn đàn."
+  },
+
+  // ========== CÂU 12 ==========
+  {
+    id: 12,
+    type: "mc",
+    text: "Lĩnh vực nào sau đây thuộc an ninh truyền thống?",
+    options: [
+      "A. Chiến tranh cục bộ.",
+      "B. An ninh lương thực.",
+      "C. An ninh kinh tế.",
+      "D. Biến đổi khí hậu."
+    ],
+    correct: 0,
+    explain: "An ninh truyền thống gắn với vấn đề quân sự, chính trị (chiến tranh cục bộ, xung đột vũ trang…)."
+  },
+  {
+    id: 13,
+    type: "mc",
+    text: "Lĩnh vực nào sau đây thuộc an ninh phi truyền thống?",
+    options: [
+      "A. Chiến tranh cục bộ.",
+      "B. Xung đột sắc tộc.",
+      "C. Dịch bệnh toàn cầu.",
+      "D. Khủng bố vũ trang."
+    ],
+    correct: 2,
+    explain: "Dịch bệnh toàn cầu là vấn đề an ninh phi truyền thống (phi quân sự)."
+  },
+  {
+    id: 14,
+    type: "mc",
+    text: "Lĩnh vực nào sau đây không thuộc an ninh phi truyền thống?",
+    options: [
+      "A. Xung đột vũ trang.",
+      "B. An ninh lương thực.",
+      "C. Biến đổi khí hậu.",
+      "D. Dịch bệnh toàn cầu."
+    ],
+    correct: 0,
+    explain: "Xung đột vũ trang thuộc an ninh truyền thống."
+  },
+  {
+    id: 15,
+    type: "mc",
+    text: "Lĩnh vực nào sau đây không thuộc an ninh truyền thống?",
+    options: [
+      "A. Khủng bố vũ trang.",
+      "B. An ninh nguồn nước.",
+      "C. Xung đột sắc tộc.",
+      "D. Chiến tranh cục bộ."
+    ],
+    correct: 1,
+    explain: "An ninh nguồn nước thuộc an ninh phi truyền thống."
+  },
+  {
+    id: 16,
+    type: "mc",
+    text: "Khủng hoảng an ninh lương thực trên thế giới do nguyên nhân chủ yếu nào sau đây?",
+    options: [
+      "A. Xung đột vũ trang, thiên tai và biến đổi khí hậu.",
+      "B. Dịch bệnh diện rộng, bùng nổ dân số và hạn hán.",
+      "C. Ô nhiễm môi trường, các loại dịch bệnh và lũ lụt.",
+      "D. Bùng nổ dân số, xung đột sắc tộc và cháy rừng."
+    ],
+    correct: 0,
+    explain: "Nguyên nhân chính được nêu trong đề là xung đột vũ trang, thiên tai và biến đổi khí hậu."
+  },
+  {
+    id: 17,
+    type: "mc",
+    text: "Tình trạng khủng hoảng an ninh lương thực là",
+    options: [
+      "A. vấn đề của châu Phi và có xu hướng gia giảm.",
+      "B. vấn đề toàn cầu nhưng có xu hướng gia giảm.",
+      "C. vấn đề toàn cầu và đang có xu hướng gia tăng.",
+      "D. vấn đề của châu Á và có xu hướng gia tăng lên."
+    ],
+    correct: 2,
+    explain: "Đây là vấn đề toàn cầu và đang có xu hướng gia tăng."
+  },
+  {
+    id: 18,
+    type: "mc",
+    text: "Hiện nay, châu nào sau đây đang khủng hoảng an ninh lương thực cao nhất thế giới?",
+    options: [
+      "A. Châu Á.",
+      "B. Châu Phi.",
+      "C. Châu Âu.",
+      "D. Châu Mỹ."
+    ],
+    correct: 1,
+    explain: "Châu Phi là khu vực bị ảnh hưởng nặng nề nhất."
+  },
+  {
+    id: 19,
+    type: "mc",
+    text: "Ở châu Á, khu vực nào sau đây chịu tác động mạnh nhất của nạn đói?",
+    options: [
+      "A. Đông Á.",
+      "B. Đông Nam Á.",
+      "C. Nam Á.",
+      "D. Tây Nam Á."
+    ],
+    correct: 2,
+    explain: "Nam Á chịu tác động mạnh nhất của nạn đói trong châu Á."
+  },
+  {
+    id: 20,
+    type: "mc",
+    text: "Các cuộc xung đột ở thế kỉ XX liên quan đến vấn đề nào sau đây?",
+    options: [
+      "A. An ninh năng lượng.",
+      "B. Thiếu nguồn nước.",
+      "C. Tranh giành đất đai.",
+      "D. Xung đột tộc người."
+    ],
+    correct: 0,
+    explain: "Nhiều xung đột lớn thế kỉ XX gắn với vấn đề năng lượng (dầu mỏ…)."
+  },
+
+  // ========== PHẦN II – ĐÚNG/SAI ==========
+  {
+    id: "II.1",
+    type: "tf",
+    text: "Cho thông tin sau:\nAn ninh lương thực là việc đảm bảo mọi người có quyền tiếp cận nguồn lương thực một cách đầy đủ, an toàn để duy trì cuộc sống khỏe mạnh.\na) An ninh lương thực bị ảnh hưởng bởi chiến tranh, xung đột vũ trang, thiên tai,…\nb) Bình quân lương thực đầu người là một trong những chỉ tiêu phản ánh an ninh lương thực.\nc) Để đảm bảo an ninh lương thực nên đẩy mạnh các biện pháp quảng canh trong nông nghiệp.\nd) Biến đổi khí hậu hậu ảnh hưởng lớn đến vấn đề an ninh lương thực của Việt Nam.",
+    options: ["a,b,d đúng; c sai", "Tất cả đều đúng", "a,b,c đúng; d sai", "a,c,d đúng; b sai"],
+    correct: 0,
+    explain: "Đáp án trong đề: a,b,d đúng; c sai (không nên đẩy mạnh quảng canh)."
+  },
+  {
+    id: "II.2",
+    type: "tf",
+    text: "Cho thông tin sau:\nTrên thế giới có nhiều vấn đề an ninh toàn cầu, được xếp vào nhóm các vấn đề an ninh truyền thống và an ninh phi truyền thống. An ninh truyền thống là các vấn đề liên quan đến quân sự. An ninh phi truyền thống bao gồm một số vấn đề mang tính toàn cầu như: an ninh lương thực, an ninh năng lượng, an ninh mạng, biến đổi khí hậu, dịch bệnh, xung đột sắc tộc,…\na) An ninh truyền thống là các vấn đề liên quan đến an ninh chính trị và quân sự như: khủng bố, xung đột vũ trang,…\nb) An ninh phi truyền thống bao gồm một số vấn đề mang tính toàn cầu như: an ninh kinh tế, an ninh năng lượng, an ninh nguồn nước, an ninh mạng,…\nc) Các vấn đề về an ninh tài chính, xung đột sắc tộc, biến đổi khí hậu, dịch bệnh, khủng bố quốc tế thuộc về an ninh truyền thống.\nd) Hội đồng Bảo an đảm nhiệm trách nhiệm hàng đầu của Liên hợp quốc là duy trì hoà bình và an ninh quốc tế.",
+    options: ["a,b,d đúng; c sai", "Tất cả đúng", "a,b,c đúng; d sai", "b,c,d đúng; a sai"],
+    correct: 0,
+    explain: "Đáp án trong đề: a,b,d đúng; c sai."
+  },
+  {
+    id: "II.3",
+    type: "tf",
+    text: "Cho thông tin sau:\nVào tháng 7 hàng năm, Ngân hàng thế giới sẽ cập nhật phân loại các nước theo GNI / người, theo bản cập nhật năm 2022, nước có GNI / người năm 2021 từ 1085 USD trở xuống là nước có thu nhập thấp, trong khoảng 1086 USD đến 4255 USD là nước có thu nhập trung bình thấp, trong khoảng 4256 USD đến 13 205 USD là nước có thu nhập trung bình cao, từ trên 13 205 USD là nước có thu nhập cao.\na) Dựa vào tiêu chí GNI/ người có thể biết được trình độ phát triển kinh tế của một quốc gia.\nb) Các nước có GNI/ người cao là những nước có chất lượng cuộc sống cao.\nc) Việt Nam là nước đang phát triển nằm trong nhóm nước có thu nhập trung bình thấp.\nd) GNI/ người phản ánh mức sống và năng suất lao động của người dân trong một nước.",
+    options: ["a,c,d đúng; b sai", "Tất cả đúng", "a,b,c đúng; d sai", "a,b,d đúng; c sai"],
+    correct: 0,
+    explain: "Đáp án trong đề: a,c,d đúng; b sai."
+  },
+  {
+    id: "II.4",
+    type: "tf",
+    text: "Cho thông tin sau:\nTrên thế giới có nhiều vấn đề an ninh toàn cầu, được xếp vào nhóm các vấn đề an ninh truyền thống và an ninh phi truyền thống. An ninh truyền thống là các vấn đề liên quan đến quân sự. An ninh phi truyền thống bao gồm một số vấn đề mang tính toàn cầu như: an ninh lương thực, an ninh năng lượng, an ninh mạng, biến đổi khí hậu, dịch bệnh, xung đột sắc tộc…\na) Quỹ tiền tệ Quốc tế (IMF) có vai trò quan trọng trong việc ổn định nền tài chính toàn cầu.\nb) Tổ chức Liên hợp quốc (UN) được thành lập nhằm mục tiêu duy trì hòa bình và an ninh quốc tế.\nc) Những vấn đề an ninh truyền thống thường dễ giải quyết, còn vấn đề an ninh phi truyền thống thường khó giải quyết.\nd) Thế giới cần duy trì sự ổn định và hòa bình để đảm bảo cho sự phát triển bền vững.",
+    options: ["a,b,d đúng; c sai", "Tất cả đúng", "a,b,c đúng; d sai", "b,c,d đúng; a sai"],
+    correct: 0,
+    explain: "Đáp án đúng: a,b,d đúng; c sai."
+  },
+  {
+    id: "II.5",
+    type: "tf",
+    text: "Cho thông tin sau:\nHiện nay, ở một số khu vực trên thế giới, hoà bình và an ninh quốc tế đang đối mặt với nhiều vấn đề như: đói nghèo, phân biệt chủng tộc, sắc tộc, tôn giáo, xung đột vũ trang, biến đổi khí hậu, tranh chấp biên giới, lãnh thổ,… diễn ra với nhiều mức độ khác nhau.\na) Tổ chức Liên hợp quốc (UN) được coi là trung tâm điều hòa các vấn đề quốc tế vì mục tiêu chung.\nb) Tổ chức có vai trò quan trọng nhất trong việc ổn định nền tài chính toàn cầu là WTO.\nc) Tình trạng phân hóa giàu nghèo giữa các nước dẫn tới nguy cơ mất an ninh toàn cầu.\nd) Sự thiếu ổn định và mất an ninh toàn cầu chỉ gây thiệt hại cho các nước chậm phát triển.",
+    options: ["a,c đúng; b,d sai", "Tất cả đúng", "a,b,c đúng; d sai", "a,c,d đúng; b sai"],
+    correct: 0,
+    explain: "b sai (IMF mới là tổ chức tài chính quan trọng nhất), d sai (ảnh hưởng toàn cầu)."
+  },
+
+  // ========== 2. THÔNG HIỂU ==========
+  {
+    id: "TH.1",
+    type: "mc",
+    text: "Trụ sở của Diễn đàn hợp tác kinh tế châu Á - Thái Bình Dương (APEC) được đặt tại thành phố nào sau đây?",
+    options: [
+      "A. Béc-lin (Đức).",
+      "B. Xin-ga-po (Xin-ga-po).",
+      "C. Giơ-ne-vơ (Thụy Sĩ).",
+      "D. Niu Oóc (Hoa Kỳ)."
+    ],
+    correct: 1,
+    explain: "Trụ sở APEC đặt tại Singapore."
+  },
+  {
+    id: "TH.2",
+    type: "mc",
+    text: "Phát biểu nào sau đây không đúng với Tổ chức Thương mại Thế giới (WTO)?",
+    options: [
+      "A. Là một tổ chức phi chính phủ lớn trên thế giới.",
+      "B. Có 164 nước tham gia thành viên (năm 2021).",
+      "C. Chi phối phần lớn hoạt động thương mại thế giới.",
+      "D. Làm sâu sắc sự khác biệt giữa các nhóm nước."
+    ],
+    correct: 3,
+    explain: "WTO không nhằm làm sâu sắc sự khác biệt giữa các nhóm nước."
+  },
+  {
+    id: "TH.3",
+    type: "mc",
+    text: "Tổ chức liên kết kinh tế có tổng GDP lớn nhất hiện nay (năm 2021) là",
+    options: [
+      "A. Liên minh châu Âu (EU).",
+      "B. Hiệp ước tự do thương mại Bắc Mỹ (NAFTA).",
+      "C. Diễn đàn hợp tác kinh tế châu Á - Thái Bình Dương (APEC).",
+      "D. Thị trường chung Nam Mỹ (MERCOSUR)."
+    ],
+    correct: 2,
+    explain: "APEC có tổng GDP lớn nhất."
+  },
+  {
+    id: "TH.4",
+    type: "mc",
+    text: "Trụ sở của Liên hợp quốc đặt tại thành phố nào sau đây?",
+    options: [
+      "A. Tô-ky-ô (Nhật Bản).",
+      "B. Bắc Kinh (Trung Quốc).",
+      "C. Pa-ri (Pháp).",
+      "D. Niu Oóc (Hoa Kỳ)."
+    ],
+    correct: 3,
+    explain: "Trụ sở Liên hợp quốc tại New York."
+  },
+  {
+    id: "TH.5",
+    type: "mc",
+    text: "Trụ sở của Quỹ tiền tệ quốc tế (IMF) được đặt tại thành phố nào sau đây?",
+    options: [
+      "A. Oa-sinh-tơn (Hoa Kỳ).",
+      "B. Luân đôn (Anh).",
+      "C. Giơ-ne-vơ (Thụy Sĩ).",
+      "D. Xin-ga-po (Xin-ga-po)."
+    ],
+    correct: 0,
+    explain: "IMF đặt trụ sở tại Washington D.C."
+  },
+  {
+    id: "TH.6",
+    type: "mc",
+    text: "Trụ sở của Tổ chức thương mại thế giới (WTO) được đặt tại thành phố nào sau đây?",
+    options: [
+      "A. Béc-lin (Đức).",
+      "B. Bắc Kinh (Trung Quốc).",
+      "C. Giơ-ne-vơ (Thụy Sĩ).",
+      "D. Niu Oóc (Hoa Kỳ)."
+    ],
+    correct: 2,
+    explain: "WTO đặt trụ sở tại Geneva (Thụy Sĩ)."
+  },
+  {
+    id: "TH.7",
+    type: "mc",
+    text: "Vai trò to lớn của Tổ chức thương mại thế giới là",
+    options: [
+      "A. củng cố nền kinh tế toàn cầu.",
+      "B. tăng cường liên kết các khối kinh tế.",
+      "C. thúc đẩy tự do hóa thương mại.",
+      "D. giải quyết xung đột giữa các nước."
+    ],
+    correct: 2,
+    explain: "Vai trò chính của WTO là thúc đẩy tự do hóa thương mại."
+  },
+
+  // ========== 3. VẬN DỤNG ==========
+  {
+    id: "VD.1",
+    type: "mc",
+    text: "Xung đột vũ trang có thể làm mất an ninh lương thực chủ yếu do",
+    options: [
+      "A. làm gián đoạn nguồn cung và khả năng tiếp cận lương thực.",
+      "B. làm thiếu hụt nghiêm trọng nguồn lao động trong nông nghiệp.",
+      "C. làm suy giảm khả năng đầu tư cho sản xuất lương thực thế giới.",
+      "D. hạn chế các hoạt động xuất, nhập khẩu lương thực trên thế giới."
+    ],
+    correct: 0,
+    explain: "Nguyên nhân trực tiếp nhất là gián đoạn nguồn cung và khả năng tiếp cận."
+  },
+  {
+    id: "VD.2",
+    type: "mc",
+    text: "Giải pháp quan trọng nhất để đảm bảo an ninh lương thực cho các nước là",
+    options: [
+      "A. cứu trợ nhân đạo khẩn cấp.",
+      "B. tập trung phát triển lương thực.",
+      "C. sản xuất nông nghiệp bền vững.",
+      "D. Phát huy vai trò của các tổ chức."
+    ],
+    correct: 2,
+    explain: "Sản xuất nông nghiệp bền vững là giải pháp căn cơ nhất."
+  },
+  {
+    id: "VD.3",
+    type: "mc",
+    text: "Giải pháp quan trọng nhất để đảm bảo an ninh năng lượng và phát triển bền vững ở các quốc gia là",
+    options: [
+      "A. tăng cường sử dụng các nguồn năng lượng tái tạo.",
+      "B. chủ động kiểm soát tốt việc sử dụng năng lượng.",
+      "C. phát huy vai trò các tổ chức năng lượng quốc tế.",
+      "D. hạn chế tốt việc sử dụng các nguồn năng lượng."
+    ],
+    correct: 0,
+    explain: "Chuyển sang năng lượng tái tạo là giải pháp then chốt."
+  },
+  {
+    id: "VD.4",
+    type: "mc",
+    text: "Về cơ cấu tổ chức, APEC khác với ASEAN, EU ở điểm cơ bản nào sau đây?",
+    options: [
+      "A. Là một liên kết kinh tế khu vực mở.",
+      "B. Là liên minh thống nhất về kinh tế.",
+      "C. Không mang nhiều tính pháp lý ràng buộc.",
+      "D. Có nhiều nước tham gia vì mục đích chung."
+    ],
+    correct: 2,
+    explain: "APEC mang tính tự nguyện, ít ràng buộc pháp lý hơn."
+  },
+  {
+    id: "VD.5",
+    type: "mc",
+    text: "An ninh mạng trở thành vấn đề an ninh toàn cầu do nguyên nhân chủ yếu nào sau đây?",
+    options: [
+      "A. Sự bùng nổ nhanh chóng của công nghệ thông tin.",
+      "B. Có thách thức lớn về kinh tế và an ninh quốc gia.",
+      "C. Diễn biến rất nhanh và ngày càng tinh vi, phức tạp.",
+      "D. Xảy ra trên phạm vi rộng lớn, không thể khắc phục."
+    ],
+    correct: 1,
+    explain: "Đáp án đúng: Có thách thức lớn về kinh tế và an ninh quốc gia."
+  },
+  {
+    id: "VD.6",
+    type: "mc",
+    text: "Động lực cơ bản thúc đẩy sự tăng trưởng và phát triển kinh tế của Diễn đàn hợp tác kinh tế châu Á - Thái Bình Dương (APEC) là",
+    options: [
+      "A. sự hình thành thị trường thống nhất trong khu vực.",
+      "B. các nước thành viên đều tham gia vào WTO.",
+      "C. sự tự do hoá đầu tư dịch vụ trong khu vực.",
+      "D. sự hợp tác và cạnh tranh giữa các thành viên."
+    ],
+    correct: 3,
+    explain: "Hợp tác + cạnh tranh giữa các thành viên là động lực chính."
+  },
+  {
+    id: "VD.7",
+    type: "mc",
+    text: "Quỹ tiền tệ quốc tế (IMF) thực hiện nhiệm vụ giám sát hệ thống tài chính toàn cầu bằng biện pháp chủ yếu nào sau đây?",
+    options: [
+      "A. Theo dõi tỉ giá hối đoái và cán cân thanh toán.",
+      "B. Hỗ trợ tài chính cho các nước thành viên IMF.",
+      "C. Đưa ra dự báo kinh tế cho các nước thành viên.",
+      "D. Hỗ trợ kỹ thuật và đào tạo nhân lực chất lượng."
+    ],
+    correct: 0,
+    explain: "Giám sát chủ yếu thông qua theo dõi tỉ giá và cán cân thanh toán."
+  },
+
+  // ========== 4. VẬN DỤNG CAO ==========
+  {
+    id: "VDC.1",
+    type: "mc",
+    text: "Vấn đề an ninh năng lượng ngày càng phức tạp hơn do nguyên nhân chủ yếu nào sau đây?",
+    options: [
+      "A. Sự phát triển mạnh mẽ của ngành công nghiệp.",
+      "B. Do các cường quốc cạnh tranh sức ảnh hưởng.",
+      "C. Đa số các nước phát triển lại giàu năng lượng.",
+      "D. Nguồn cung cấp năng lượng ngày càng hạn chế."
+    ],
+    correct: 1,
+    explain: "Sự cạnh tranh ảnh hưởng giữa các cường quốc làm vấn đề phức tạp hơn."
+  },
+  {
+    id: "VDC.2",
+    type: "mc",
+    text: "Khủng hoảng an ninh lương thực trên thế giới do nguyên nhân chủ yếu nào sau đây?",
+    options: [
+      "A. Xung đột vũ trang, thiên tai và biến đổi khí hậu.",
+      "B. Dịch bệnh diện rộng, bùng nổ dân số và hạn hán.",
+      "C. Ô nhiễm môi trường, các loại dịch bệnh và lũ lụt.",
+      "D. Bùng nổ dân số, xung đột sắc tộc và cháy rừng."
+    ],
+    correct: 0,
+    explain: "Giống câu 16 – nguyên nhân chính được nhấn mạnh trong đề."
+  },
+  {
+    id: "VDC.3",
+    type: "mc",
+    text: "Giải pháp quan trọng nhất để đảm bảo an ninh mạng cho các quốc gia là",
+    options: [
+      "A. xây dựng chiến lược và luật an ninh mạng.",
+      "B. tăng cường phối hợp, xử lí triệt để vi phạm.",
+      "C. đầu tư đào tạo, xây dựng lực lượng chuyên trách.",
+      "D. tăng cường phòng thủ, áp dụng an ninh kĩ thuật số."
+    ],
+    correct: 0,
+    explain: "Xây dựng chiến lược + khung pháp lý là nền tảng quan trọng nhất."
+  },
+  {
+    id: "VDC.4",
+    type: "mc",
+    text: "Các tổ chức liên kết kinh tế khu vực trên thế giới được hình thành chủ yếu do nguyên nhân nào dưới đây?",
+    options: [
+      "A. Các nước có nét tương đồng về lịch sử phát triển.",
+      "B. Chịu sức ép cạnh tranh và sự phát triển không đều.",
+      "C. Các quốc gia có chung mục tiêu và lợi ích phát triển.",
+      "D. Tổng thu nhập quốc dân tương tự nhau giữa các nước."
+    ],
+    correct: 1,
+    explain: "Sức ép cạnh tranh và phát triển không đều là động lực chính hình thành liên kết khu vực."
+  },
+
+  // ========== CÂU TRẢ LỜI NGẮN ==========
+  {
+    id: "TN.1",
+    type: "short",
+    text: "Năm 2020, thế giới có 768 triệu người bị thiếu dinh dưỡng, trong đó có 54,4% sống ở châu Á. Vậy số người bị thiếu dinh dưỡng ở châu Á năm 2020 là bao nhiêu triệu người? (làm tròn kết quả đến hàng đơn vị).",
+    answer: "418",
+    explain: "768 × 54,4 : 100 ≈ 418 triệu người."
+  }
+];
+
+// ===================== BIẾN TOÀN CỤC =====================
+let questions = JSON.parse(JSON.stringify(originalQuestions));
+
+// ===================== HÀM XỬ LÝ =====================
+function renderQuiz() {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  document.getElementById('scoreBox').style.display = 'none';
+
+  let currentSection = '';
+
+  questions.forEach((q, idx) => {
+    let section = '';
+    if (q.id === 5) section = 'PHẦN I – TRẮC NGHIỆM NHIỀU LỰA CHỌN';
+    else if (typeof q.id === 'number' || q.id.toString().startsWith('II')) {
+      if (q.id === 12 && currentSection !== 'I') section = 'PHẦN I – TRẮC NGHIỆM NHIỀU LỰA CHỌN';
+      else if (q.id.toString().startsWith('II') && currentSection !== 'II') section = 'PHẦN II – TRẮC NGHIỆM ĐÚNG/SAI';
+    } else if (q.id.startsWith('TH') && currentSection !== 'TH') section = '2. THÔNG HIỂU';
+    else if (q.id.startsWith('VD') && !q.id.startsWith('VDC') && currentSection !== 'VD') section = '3. VẬN DỤNG';
+    else if (q.id.startsWith('VDC') && currentSection !== 'VDC') section = '4. VẬN DỤNG CAO';
+    else if (q.id.startsWith('TN') && currentSection !== 'TN') section = 'CÂU TRẢ LỜI NGẮN';
+
+    if (section && section !== currentSection) {
+      currentSection = section;
+      const title = document.createElement('div');
+      title.className = 'section-title';
+      title.textContent = section;
+      container.appendChild(title);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'question-card' + (q.type === 'short' ? ' short-answer' : '');
+    card.id = `q-${idx}`;
+
+    let html = `<div class="q-number">Câu ${q.id}</div>`;
+    html += `<div class="q-text">${q.text.replace(/\n/g, '<br>')}</div>`;
+
+    if (q.type === 'short') {
+      html += `<textarea id="ans-${idx}" placeholder="Nhập câu trả lời..."></textarea>`;
+      html += `<div class="feedback" id="fb-${idx}"></div>`;
+    } else {
+      html += `<div class="options" id="opts-${idx}">`;
+      q.options.forEach((opt, i) => {
+        html += `
+          <label>
+            <input type="radio" name="q${idx}" value="${i}">
+            <span>${opt}</span>
+          </label>`;
+      });
+      html += `</div>`;
+      html += `<div class="feedback" id="fb-${idx}"></div>`;
+    }
+
+    card.innerHTML = html;
+    container.appendChild(card);
+
+    if (q.type !== 'short') {
+      const labels = card.querySelectorAll('label');
+      labels.forEach(label => {
+        label.addEventListener('click', () => {
+          labels.forEach(l => l.classList.remove('selected'));
+          label.classList.add('selected');
+        });
+      });
+    }
+  });
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function shuffleQuestions() {
+  questions = shuffleArray([...questions]);
+  renderQuiz();
+  alert('Đã đảo thứ tự câu hỏi!');
+}
+
+function shuffleOptions() {
+  questions.forEach((q) => {
+    if (q.type === 'short') return;
+    const indices = q.options.map((_, i) => i);
+    shuffleArray(indices);
+    const newOptions = indices.map(i => q.options[i]);
+    const newCorrect = indices.indexOf(q.correct);
+    q.options = newOptions;
+    q.correct = newCorrect;
+  });
+  renderQuiz();
+  alert('Đã đảo thứ tự đáp án trong các câu!');
+}
+
+function resetQuiz() {
+  questions = JSON.parse(JSON.stringify(originalQuestions));
+  renderQuiz();
+  alert('Đã reset về thứ tự gốc!');
+}
+
+function checkAll() {
+  let correctCount = 0;
+  let total = 0;
+
+  questions.forEach((q, idx) => {
+    total++;
+    const fb = document.getElementById(`fb-${idx}`);
+    fb.classList.remove('show', 'correct', 'wrong');
+
+    if (q.type === 'short') {
+      const val = document.getElementById(`ans-${idx}`).value.trim();
+      if (val === q.answer || val === q.answer + ' triệu' || val.includes(q.answer)) {
+        fb.textContent = '✅ Đúng! ' + q.explain;
+        fb.classList.add('show', 'correct');
+        correctCount++;
+      } else {
+        fb.textContent = '❌ Sai. Đáp án đúng: ' + q.answer + '. ' + q.explain;
+        fb.classList.add('show', 'wrong');
+      }
+    } else {
+      const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+      const labels = document.querySelectorAll(`#opts-${idx} label`);
+
+      labels.forEach(l => {
+        l.classList.remove('correct', 'wrong', 'selected');
+      });
+
+      if (!selected) {
+        fb.textContent = 'Chưa chọn đáp án';
+        fb.classList.add('show', 'wrong');
+        labels[q.correct].classList.add('correct');
+        return;
+      }
+
+      const chosen = parseInt(selected.value);
+      if (chosen === q.correct) {
+        fb.textContent = '✅ Đúng! ' + q.explain;
+        fb.classList.add('show', 'correct');
+        labels[chosen].classList.add('correct');
+        correctCount++;
+      } else {
+        fb.textContent = '❌ Sai. ' + q.explain;
+        fb.classList.add('show', 'wrong');
+        labels[chosen].classList.add('wrong');
+        labels[q.correct].classList.add('correct');
+      }
+    }
+  });
+
+  const scoreBox = document.getElementById('scoreBox');
+  scoreBox.style.display = 'block';
+  scoreBox.innerHTML = `Kết quả: <span style="color:var(--correct)">${correctCount}</span> / ${total} câu đúng`;
+  scoreBox.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Khởi tạo
+renderQuiz();
+</script>
+</body>
+</html>
